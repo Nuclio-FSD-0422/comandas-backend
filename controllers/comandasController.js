@@ -46,6 +46,42 @@ const comandasController = {
     } catch (error) {
       console.log('Se ha producido un error', error);
     }
+  },
+  deleteComandaById: async function(req, res) {
+    try {
+      // Datos de la comanda a eliminar
+      const { comandaId } = req.params;
+
+      // Leemos el contenido del archivo y lo parseamos para trabajar con un objeto JS
+      const fileData = await fsPromises.readFile('comandas.db', { encoding: 'utf-8' });
+      let listaComandas = JSON.parse(fileData);
+
+      // Recorremos el listado de comandas para buscar la que tiene el ID que hemos recibido
+      let positionToDelete;
+      for(const [index, comanda] of listaComandas.entries()) {
+        // IMP! Hacemos un parseInt para convertir a número entero el número recibido por
+        // parámetro, que es string por defecto
+        if(comanda.id === parseInt(comandaId)) {
+          positionToDelete = index;
+          break;
+        }
+      }
+      
+      // Si positionToDelete es distinto a undefined, es decir, si la búsqueda anterior ha encontrado
+      // una comanda con ese ID, hacemos la operación de borrado. Si no, mandamos mensaje de error.
+      if(positionToDelete !== undefined) {
+        listaComandas.splice(positionToDelete, 1);
+        listaComandas = JSON.stringify(listaComandas);
+
+        await fsPromises.writeFile('comandas.db', listaComandas, { flag: 'w' });
+        
+        res.send(`¡Oiído cocina! Hemos eliminado la comanda nº ${comandaId}`);
+      } else {
+        res.send('No se ha encontrado una comanda con ese ID');
+      }
+    } catch (error) {
+      console.log('Se ha producido un error al eliminar la comanda', error);
+    }
   }
 };
 
